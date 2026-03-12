@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GymProgress iOS</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007AFF">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* FONDO Y TIPOGRAFÍA SISTEMA IOS */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #F2F2F7; 
+            color: #1C1C1E;
+            padding: 20px 16px; 
+            max-width: 450px; 
+            margin: auto; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* TARJETAS (CARDS) */
+        .panel-configuracion, .seccion-tarjeta { 
+            background-color: #FFFFFF; 
+            padding: 20px; 
+            border-radius: 14px; 
+            margin-bottom: 24px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        /* TÍTULOS */
+        .seccion-titulo { 
+            font-size: 20px; 
+            font-weight: 700; 
+            margin: 0 0 16px 0; 
+            color: #000000;
+        }
+
+        /* INPUTS Y SELECTS ESTILO NATIVO */
+        input, select { 
+            display: block; 
+            width: 100%; 
+            margin-bottom: 16px; 
+            padding: 14px 16px; 
+            box-sizing: border-box; 
+            font-size: 17px; 
+            background-color: #F2F2F7;
+            border: none;
+            border-radius: 12px;
+            color: #1C1C1E;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* Flecha personalizada para selectores */
+        select {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238E8E93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px top 50%;
+            background-size: 12px auto;
+        }
+
+        /* BOTONES */
+        button { 
+            display: block;
+            width: 100%;
+            background-color: #007AFF; 
+            color: white; 
+            border: none; 
+            border-radius: 14px; 
+            font-weight: 600; 
+            font-size: 17px;
+            padding: 16px; 
+            cursor: pointer; 
+            transition: opacity 0.2s;
+            margin-bottom: 12px;
+        }
+
+        button:active { opacity: 0.7; }
+
+        /* LISTAS Y REGISTROS */
+        .registro { 
+            padding: 14px 0; 
+            border-bottom: 1px solid #E5E5EA; 
+        }
+        .registro:last-child { border-bottom: none; }
+
+        .etiqueta-grupo { 
+            display: inline-block; 
+            background-color: #E5E5EA; 
+            color: #8E8E93; 
+            padding: 4px 8px; 
+            border-radius: 8px; 
+            font-size: 11px; 
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        /* COLORES ESPECIALES */
+        .btn-secundario { background-color: #E5E5EA; color: #007AFF; }
+        .btn-exito { background-color: #34C759; }
+        .btn-peligro { background-color: #FF3B30; color: white; margin-top: 30px; font-size: 14px;}
+
+        .fila-perfil { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .fila-perfil select { margin-bottom: 0; }
+        .info-ultimo { font-size: 14px; font-weight: 500; color: #8E8E93; margin-bottom: 16px; text-align: center; }
+        
+        #selectorIdioma { width: auto; background-color: transparent; font-weight: 600; font-size: 14px; margin-bottom: 0;}
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; margin: 0;">GymProgress</h1>
+        <select id="selectorIdioma" onchange="cambiarIdioma()">
+            <option value="es">🇪🇸 ES</option>
+            <option value="pt">🇧🇷 PT</option>
+            <option value="en">🇺🇸 EN</option>
+        </select>
+    </div>
+
+    <div class="panel-configuracion">
+        <label><strong data-i18n="perfil">👤 Perfil:</strong></label>
+        <div class="fila-perfil">
+            <select id="perfilUsuario" onchange="cambiarPerfil()">
+                <option value="usuario1" id="nombre_usuario1">Perfil 1</option>
+                <option value="usuario2" id="nombre_usuario2">Perfil 2</option>
+            </select>
+            <button class="btn-secundario" style="width: auto; padding: 10px;" onclick="renombrarPerfil()">📝</button>
+        </div>
+
+        <label style="margin-top: 10px; display: block;"><strong data-i18n="gym">📍 Gimnasio:</strong></label>
+        <select id="gimnasioActual" onchange="actualizarPantallas()">
+            <option value="Skyfit">Skyfit (Sao Jose)</option>
+            <option value="Panobianco">Panobianco (Campinas)</option>
+        </select>
+    </div>
+
+    <div class="seccion-tarjeta">
+        <h2 class="seccion-titulo" data-i18n="registrar">🏋️ Registrar Serie</h2>
+        <select id="ejercicioSelect" onchange="mostrarUltimoEntreno()"></select>
+        <div id="ultimoEntrenoInfo" class="info-ultimo"></div>
+        <input type="number" id="peso" placeholder="Peso (kg)" data-i18n="ph_peso" inputmode="decimal">
+        <input type="number" id="repeticiones" placeholder="Repeticiones" data-i18n="ph_reps" inputmode="numeric">
+        <button onclick="guardarEntrenamiento()" data-i18n="guardar">Guardar Entrenamiento</button>
+    </div>
+
+    <div class="seccion-tarjeta">
+        <h2 class="seccion-titulo" data-i18n="cal_tit">📅 Mi Calendario</h2>
+        <input type="date" id="fechaCalendario" onchange="mostrarHistorialPorFecha()">
+        <div id="calendario-container"></div>
+    </div>
+
+    <div class="seccion-tarjeta">
+        <h2 class="seccion-titulo" data-i18n="grafico_tit">📈 Análisis de Progreso</h2>
+        <select id="ejercicioGrafico" onchange="renderizarGrafico()"></select>
+        <canvas id="graficoProgreso"></canvas>
+    </div>
+
+    <div class="seccion-tarjeta">
+        <h2 class="seccion-titulo" data-i18n="rec_tit">🏆 Mejores Récords</h2>
+        <select id="filtroGrupo" onchange="mostrarMejoresEsfuerzos()"></select>
+        <div id="historial-container"></div>
+    </div>
+
+    <div class="seccion-tarjeta">
+        <h2 class="seccion-titulo" data-i18n="dat_tit">💾 Gestión de Datos</h2>
+        <button class="btn-exito" onclick="exportarCSV()" data-i18n="exp">Exportar CSV</button>
+        <input type="file" id="archivoCSV" accept=".csv" style="margin-top: 10px;">
+        <button class="btn-secundario" onclick="importarCSV()" data-i18n="imp_btn">Importar CSV</button>
+        <button class="btn-peligro" onclick="borrarTodo()" data-i18n="del_btn">⚠️ Borrar todos los datos</button>
+    </div>
+
+  <script src="app.js"></script>
+    
+    <script>
+        // Verificamos si el navegador soporta Service Workers
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Intentamos registrar el archivo sw.js
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registro => {
+                        console.log('Service Worker registrado con éxito. Scope:', registro.scope);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar el Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
+</body>
+</html>
