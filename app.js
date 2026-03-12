@@ -38,9 +38,20 @@ const diccionarioIdiomas = {
     }
 };
 
+// OPTIMIZACIÓN: Función segura para leer LocalStorage
+function getDatosSeguros(clave, fallback) {
+    try {
+        const datos = localStorage.getItem(clave);
+        return datos ? JSON.parse(datos) : fallback;
+    } catch (error) {
+        console.error("Error leyendo datos del almacenamiento local", error);
+        return fallback;
+    }
+}
+
 function t(c) { 
     if (c.startsWith('c_')) {
-        const custom = JSON.parse(localStorage.getItem('gym_custom_ex') || '[]');
+        const custom = getDatosSeguros('gym_custom_ex', []);
         const f = custom.find(x => x.id === c);
         return f ? f.nombre : c;
     }
@@ -60,10 +71,10 @@ function agregarEjercicioCustom() {
     const msg = lang === 'en' ? 'New exercise name:' : (lang === 'pt' ? 'Nome do novo exercício:' : 'Nombre del nuevo ejercicio:');
     let nombre = prompt(msg);
     if (!nombre || nombre.trim() === '') return;
-    nombre = nombre.trim(); // Sanitizando a entrada
+    nombre = nombre.trim(); 
     
     const customId = 'c_' + Date.now();
-    let customArr = JSON.parse(localStorage.getItem('gym_custom_ex') || '[]');
+    let customArr = getDatosSeguros('gym_custom_ex', []);
     customArr.push({ id: customId, nombre: nombre });
     localStorage.setItem('gym_custom_ex', JSON.stringify(customArr));
     
@@ -78,7 +89,6 @@ function construirListas() {
     sels.forEach(s => s.innerHTML = '');
     fil.innerHTML = `<option value="Todos">${t('todos')}</option>`;
     
-    // Ejercicios Base
     for (const g in estructuraEjercicios) {
         fil.innerHTML += `<option value="${g}">${t(g)}</option>`;
         sels.forEach(s => {
@@ -90,8 +100,7 @@ function construirListas() {
         });
     }
 
-    // Ejercicios Custom
-    const customArr = JSON.parse(localStorage.getItem('gym_custom_ex') || '[]');
+    const customArr = getDatosSeguros('gym_custom_ex', []);
     if (customArr.length > 0) {
         fil.innerHTML += `<option value="g_custom">${t('g_custom')}</option>`;
         sels.forEach(s => {
@@ -116,7 +125,7 @@ function cambiarIdioma() {
 }
 
 function actualizarPantallas() {
-    historialEntrenamientos = JSON.parse(localStorage.getItem(obtenerClave()) || '[]');
+    historialEntrenamientos = getDatosSeguros(obtenerClave(), []);
     mostrarUltimoEntreno(); mostrarHistorialPorFecha(); mostrarMejoresEsfuerzos(); renderizarGrafico();
 }
 
@@ -124,9 +133,12 @@ function guardarEntrenamiento() {
     const ej = document.getElementById('ejercicioSelect');
     const p = document.getElementById('peso').value;
     const r = document.getElementById('repeticiones').value;
-    const nota = document.getElementById('comentario').value;
     
-    if (!p || !r || p <= 0 || r <= 0) return; // Adicionado bloqueio para números inválidos
+    // OPTIMIZACIÓN: Sanitizar el comentario reemplazando comas por puntos para evitar corromper el CSV
+    let nota = document.getElementById('comentario').value;
+    if (nota) nota = nota.replace(/,/g, '.'); 
+    
+    if (!p || !r || p <= 0 || r <= 0) return; 
     
     historialEntrenamientos.push({
         id: Date.now(),
@@ -148,7 +160,7 @@ function guardarEntrenamiento() {
 
 function renderizarGrafico() {
     const ejGrafico = document.getElementById('ejercicioGrafico');
-    if (!ejGrafico || !ejGrafico.value) return; // Guard clause para prevenir falha no boot
+    if (!ejGrafico || !ejGrafico.value) return; 
     
     const ej = ejGrafico.value;
     const gym = document.getElementById('gimnasioActual').value;
@@ -157,6 +169,10 @@ function renderizarGrafico() {
     if (graficoInstancia) graficoInstancia.destroy();
     
     const f = historialEntrenamientos.filter(e => e.ejercicio === ej && e.gimnasio === gym);
+    
+    // Si no hay datos, no intentamos renderizar (evita errores en consola)
+    if (f.length === 0) return;
+
     const m = {}; f.forEach(e => { if (!m[e.fechaISO] || e.peso > m[e.fechaISO]) m[e.fechaISO] = e.peso; });
     const keys = Object.keys(m).sort();
     
@@ -208,12 +224,14 @@ function mostrarMejoresEsfuerzos() {
 function renombrarPerfil() {
     const id = document.getElementById('perfilUsuario').value;
     const n = prompt("Nombre:", document.getElementById('nombre_' + id).textContent);
-    if (n) { localStorage.setItem('display_' + id, n); document.getElementById('nombre_' + id).textContent = n; }
+    if (n && n.trim() !== "") { 
+        localStorage.setItem('display_' + id, n.trim()); 
+        document.getElementById('nombre_' + id).textContent = n.trim(); 
+    }
 }
 
 function exportarCSV() {
     let csv = "Fecha,Gimnasio,Grupo,Ejercicio,Peso,Repeticiones,Notas\n";
-    // CORRIGIDO: Exportando o ID original de e.ejercicio em vez da string traduzida t(e.ejercicio)
     historialEntrenamientos.forEach(e => csv += `${e.fechaISO},${e.gimnasio},${e.grupo},${e.ejercicio},${e.peso},${e.repeticiones},${e.notas || ''}\n`);
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `gym_${document.getElementById('perfilUsuario').value}.csv`; a.click();
@@ -223,11 +241,26 @@ function importarCSV() {
     const f = document.getElementById('archivoCSV').files[0]; if (!f) return;
     const r = new FileReader();
     r.onload = function(e) {
-        e.target.result.split('\n').slice(1).forEach(l => {
+        const lines = e.target.result.split('\n');
+        lines.slice(1).forEach(l => {
+            if (l.trim() === '') return; // OPTIMIZACIÓN: Evitar procesar líneas vacías (evita bugs de NaN)
             const c = l.split(',');
-            if (c.length > 4) historialEntrenamientos.push({ id: Date.now()+Math.random(), fechaISO: c[0], gimnasio: c[1], grupo: c[2], ejercicio: c[3], peso: parseFloat(c[4]), repeticiones: parseInt(c[5]), notas: c[6] || '' });
+            if (c.length >= 6) { // Asegurar que al menos tenga los datos vitales
+                historialEntrenamientos.push({ 
+                    id: Date.now()+Math.random(), 
+                    fechaISO: c[0], 
+                    gimnasio: c[1], 
+                    grupo: c[2], 
+                    ejercicio: c[3], 
+                    peso: parseFloat(c[4]) || 0, // Fallback en caso de error
+                    repeticiones: parseInt(c[5]) || 0, 
+                    notas: c[6] ? c[6].replace('\r', '') : '' // Limpiar saltos de línea huérfanos
+                });
+            }
         });
-        localStorage.setItem(obtenerClave(), JSON.stringify(historialEntrenamientos)); actualizarPantallas();
+        localStorage.setItem(obtenerClave(), JSON.stringify(historialEntrenamientos)); 
+        actualizarPantallas();
+        alert("Datos importados con éxito"); // Feedback al usuario
     };
     r.readAsText(f);
 }
@@ -238,6 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('nombre_usuario1').textContent = localStorage.getItem('display_usuario1') || 'Perfil 1';
     document.getElementById('nombre_usuario2').textContent = localStorage.getItem('display_usuario2') || 'Perfil 2';
     document.getElementById('selectorIdioma').value = localStorage.getItem('idiomaApp') || 'es';
-    const d = new Date(); document.getElementById('fechaCalendario').value = d.toISOString().split('T')[0];
+    const d = new Date(); 
+    // Asegurar que se cargue la zona horaria local correcta
+    document.getElementById('fechaCalendario').value = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     cambiarIdioma();
 });

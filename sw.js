@@ -1,5 +1,11 @@
-const CACHE_NAME = 'gym-progress-v5'; // Subi a versão para forçar atualização inicial
-const assets = ['./', './index.html', './app.js', './manifest.json'];
+const CACHE_NAME = 'gym-progress-v6'; // Subimos la versión para forzar la actualización de estos cambios
+const assets = [
+    './', 
+    './index.html', 
+    './app.js', 
+    './manifest.json',
+    'https://cdn.jsdelivr.net/npm/chart.js' // OPTIMIZACIÓN: Añadido para que la gráfica cargue sin internet
+];
 
 self.addEventListener('install', e => {
     self.skipWaiting();
@@ -13,8 +19,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-    // Nova estratégia: Network First, caindo para Cache. 
-    // Assim as atualizações de HTML/JS que você fizer refletirão sempre que houver internet.
+    // OPTIMIZACIÓN: Solo interceptamos peticiones HTTP/HTTPS (evita errores con extensiones del navegador si lo abres en Desktop)
+    if (!e.request.url.startsWith('http')) return;
+
     e.respondWith(
         fetch(e.request).then(res => {
             const resClone = res.clone();
