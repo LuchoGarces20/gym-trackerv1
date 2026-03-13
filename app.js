@@ -38,7 +38,6 @@ const diccionarioIdiomas = {
     }
 };
 
-// OPTIMIZACIÓN: Función segura para leer LocalStorage
 function getDatosSeguros(clave, fallback) {
     try {
         const datos = localStorage.getItem(clave);
@@ -134,7 +133,6 @@ function guardarEntrenamiento() {
     const p = document.getElementById('peso').value;
     const r = document.getElementById('repeticiones').value;
     
-    // OPTIMIZACIÓN: Sanitizar el comentario reemplazando comas por puntos para evitar corromper el CSV
     let nota = document.getElementById('comentario').value;
     if (nota) nota = nota.replace(/,/g, '.'); 
     
@@ -170,7 +168,6 @@ function renderizarGrafico() {
     
     const f = historialEntrenamientos.filter(e => e.ejercicio === ej && e.gimnasio === gym);
     
-    // Si no hay datos, no intentamos renderizar (evita errores en consola)
     if (f.length === 0) return;
 
     const m = {}; f.forEach(e => { if (!m[e.fechaISO] || e.peso > m[e.fechaISO]) m[e.fechaISO] = e.peso; });
@@ -192,8 +189,17 @@ function mostrarUltimoEntreno() {
     
     const ej = ejSelect.value;
     const gym = document.getElementById('gimnasioActual').value;
+    
+    // Mostrar última info
     const f = historialEntrenamientos.filter(e => e.ejercicio === ej && e.gimnasio === gym).sort((a,b) => b.id - a.id);
     document.getElementById('ultimoEntrenoInfo').textContent = f.length ? `${t('msg_ultimo')} ${f[0].peso}kg x ${f[0].repeticiones} ${f[0].notas ? '📝' : ''}` : "";
+
+    // Sincronizar el selector del gráfico con el ejercicio actual seleccionado
+    const ejGrafico = document.getElementById('ejercicioGrafico');
+    if (ejGrafico && ejGrafico.value !== ej) {
+        ejGrafico.value = ej;
+        renderizarGrafico();
+    }
 }
 
 function mostrarHistorialPorFecha() {
@@ -243,24 +249,24 @@ function importarCSV() {
     r.onload = function(e) {
         const lines = e.target.result.split('\n');
         lines.slice(1).forEach(l => {
-            if (l.trim() === '') return; // OPTIMIZACIÓN: Evitar procesar líneas vacías (evita bugs de NaN)
+            if (l.trim() === '') return; 
             const c = l.split(',');
-            if (c.length >= 6) { // Asegurar que al menos tenga los datos vitales
+            if (c.length >= 6) { 
                 historialEntrenamientos.push({ 
                     id: Date.now()+Math.random(), 
                     fechaISO: c[0], 
                     gimnasio: c[1], 
                     grupo: c[2], 
                     ejercicio: c[3], 
-                    peso: parseFloat(c[4]) || 0, // Fallback en caso de error
+                    peso: parseFloat(c[4]) || 0, 
                     repeticiones: parseInt(c[5]) || 0, 
-                    notas: c[6] ? c[6].replace('\r', '') : '' // Limpiar saltos de línea huérfanos
+                    notas: c[6] ? c[6].replace('\r', '') : ''
                 });
             }
         });
         localStorage.setItem(obtenerClave(), JSON.stringify(historialEntrenamientos)); 
         actualizarPantallas();
-        alert("Datos importados con éxito"); // Feedback al usuario
+        alert("Datos importados con éxito"); 
     };
     r.readAsText(f);
 }
@@ -272,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('nombre_usuario2').textContent = localStorage.getItem('display_usuario2') || 'Perfil 2';
     document.getElementById('selectorIdioma').value = localStorage.getItem('idiomaApp') || 'es';
     const d = new Date(); 
-    // Asegurar que se cargue la zona horaria local correcta
     document.getElementById('fechaCalendario').value = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     cambiarIdioma();
 });

@@ -1,10 +1,10 @@
-const CACHE_NAME = 'gym-progress-v6'; // Subimos la versión para forzar la actualización de estos cambios
+const CACHE_NAME = 'gym-progress-v7'; // Versión actualizada para forzar la sincronización
 const assets = [
     './', 
     './index.html', 
     './app.js', 
     './manifest.json',
-    'https://cdn.jsdelivr.net/npm/chart.js' // OPTIMIZACIÓN: Añadido para que la gráfica cargue sin internet
+    'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
 self.addEventListener('install', e => {
@@ -19,7 +19,6 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-    // OPTIMIZACIÓN: Solo interceptamos peticiones HTTP/HTTPS (evita errores con extensiones del navegador si lo abres en Desktop)
     if (!e.request.url.startsWith('http')) return;
 
     e.respondWith(

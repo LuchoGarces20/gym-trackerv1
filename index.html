@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#a1c4fd"> <title>GymProgress Pro</title>
+    <meta name="theme-color" content="#a1c4fd"> 
+    <title>GymProgress Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     
@@ -30,7 +31,7 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* EFECTO LIQUID GLASS */
+        /* EFECTO LIQUID GLASS CON CORRECCIÓN DE OVERFLOW */
         .card { 
             background: rgba(255, 255, 255, 0.45); 
             backdrop-filter: blur(16px); 
@@ -40,6 +41,9 @@
             padding: 20px; 
             margin-bottom: 20px; 
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
+            box-sizing: border-box;
+            overflow: hidden;
+            max-width: 100%;
         }
 
         h1 { font-size: 28px; font-weight: 800; margin: 0; color: #000; letter-spacing: -0.5px;}
@@ -57,6 +61,7 @@
             color: #1d1d1f;
             outline: none;
             transition: all 0.3s ease;
+            max-width: 100%;
         }
 
         input:focus, select:focus {
@@ -83,7 +88,7 @@
         .btn-green { background: #34C759; color: white; }
         .btn-red { background: #FF3B30; color: white; margin-top: 10px; }
         
-        .log-item { padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 15px; }
+        .log-item { padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 15px; word-break: break-word; }
         .log-item:last-child { border-bottom: none; }
         .badge { display: inline-block; background: rgba(0, 122, 255, 0.1); color: #007AFF; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-bottom: 6px; }
         .nota-text { display: block; font-size: 13px; color: #666; font-style: italic; margin-top: 4px; }
@@ -112,7 +117,7 @@
         </div>
         <select id="gimnasioActual" aria-label="Gimnasio actual" onchange="actualizarPantallas()" style="margin-top: 12px; margin-bottom: 0;">
             <option value="Skyfit">Skyfit (SJC)</option>
-            <option value="Panobianco">Panobianco (CPQ)</option>
+            <option value="Panobianco">Panobianco (Campinas)</option>
             <option value="Calabria">Calabria (Campinas)</option>
         </select>
     </div>
